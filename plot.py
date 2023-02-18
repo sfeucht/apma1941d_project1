@@ -2,7 +2,8 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
-from main import STOP
+# from main import STOP
+STOP = 10000
 
 font = {'weight' : 'normal',
         'size'   : 16}
@@ -87,19 +88,23 @@ def plot_beta_choices(texts):
                 by_beta[subkey][key] = subval
         
         betas = by_beta.keys()
-        array = np.array([list(d.values()) for d in by_beta.values()]) #(6 betas, 10 seeds, 10000 plaus)
+        array = np.array([list(d.values()) for d in by_beta.values()]) #(9 betas, 10 seeds, 10000 plaus)
         global_min = np.min(array) #the lowest possible plausibility for this data
-        run_mins = np.min(array, axis=2) #the lowest value that each run went down to, shape (6 betas, 10 seeds)
-        n_converged = np.sum(1 - (run_mins > global_min + 10), axis=1) # shape (6,1)
+        run_mins = np.min(array, axis=2) #the lowest value that each run went down to, shape (9 betas, 10 seeds)
+        n_converged = np.sum(1 - (run_mins > global_min + 10), axis=1) # shape (9,1)
+
+        # change the order so that we get rid of 0 and then put the last three values at the beginning 
+        n_converged = np.roll(n_converged[1:], 3)
         
         per_text.append(n_converged)
     
     plt.figure(figsize=(10,6), tight_layout=True)
     _, ax = plt.subplots()
+    betas = [0.001, 0.01, 0.1, .2, .4, .6, .8, 1]
     for i, ns in enumerate(per_text):
-        ax.plot(ns, '-', linewidth=2, label=f"Text {i+1}")
+        ax.plot(betas, ns, '-', linewidth=2, label=f"Text {i+1}")
     ax.legend()
-    plt.xticks(range(len(betas)), betas)
+    plt.xticks(betas, betas)
     plt.xlabel("Value of \u03B2 Tested")
     plt.ylabel("Number of Seeds That Converged")
     plt.title("")
